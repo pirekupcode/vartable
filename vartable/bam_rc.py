@@ -1,7 +1,11 @@
 from typing import NewType, List, Union, NamedTuple
-
+ 
 from typing_extensions import Literal, TypedDict
+from Bio.Seq import Seq
+x = Seq()
+
 Fraction = NewType('Fraction', float)
+   
 A = Literal['A']
 C = Literal['C']
 T = Literal['T']
@@ -11,7 +15,7 @@ E = Literal['=']
 Nuc = Union[A, C, T, G]
 NucN = Union[Nuc, N]
 NucEN = Union[NucN, E]
-
+ 
 # could be a typeddict or an List[5] type . . . note the = on the first thing i.e. Type
 class BRCEntry(NamedTuple):
   base: Nuc 
@@ -71,7 +75,7 @@ def parse_line(s: str) -> BRCRow:
   entries = {e.base : e for e in map(parse_entry, fs[4:]) }
   nuc = cast(Nuc, fs[2])
   return BRCRow(fs[0], int(fs[1]), nuc, int(fs[3]), cast(BRCEntries, entries))
-
+ 
 #TODO: 
 '''
 assert len(fs) == 4 + 6, fs
