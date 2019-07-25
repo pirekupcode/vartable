@@ -13,7 +13,9 @@ COPY july-22-latest-3.sh /tmp/miniconda.sh
 
 RUN bash /tmp/miniconda.sh -bfp /usr/local/ \
     && rm -rf /tmp/miniconda.sh \
-    && conda install -y python=$PYTHON_VERSION \
     && conda update conda \
+    && conda install -y python=$PYTHON_VERSION \
     && conda clean --all --yes \
-    && conda install -c bioconda bam-readcount PyVCF
+    && conda install -c conda-requirements.txt \
+    && pip install pip-requirements.txt \
+    && python setup.py develop
