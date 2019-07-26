@@ -4,7 +4,9 @@ Uses bam-readcount and PyVCF to assist manual curation of viral genomes.
 
 ```bash
 
-$ vartable_report testdata/fullsample.bam.vcf --bam testdata/fullsample.bam --ref testdata/Den1__WestPac__1997.fasta --type base_caller  --mindepth 10 --minpercent 1 --out testdata/example.tsv
+$ vartable_report testdata/fullsample.bam.vcf --bam testdata/fullsample.bam \
+                --ref testdata/Den1__WestPac__1997.fasta --type base_caller \
+                --mindepth 10 --minpercent 1 --out testdata/example.tsv
 
 ```
 
@@ -17,7 +19,8 @@ Output Info
 
 
 
-####For bam-redcount:
+For bam-redcount:
+-----------------
 
 Project home:   https://github.com/genome/bam-readcount
 
