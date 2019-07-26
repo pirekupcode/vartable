@@ -6,9 +6,21 @@ Uses bam-readcount and PyVCF to assist manual curation of viral genomes.
 
 $ vartable_report testdata/fullsample.bam.vcf --bam testdata/fullsample.bam \
                 --ref testdata/Den1__WestPac__1997.fasta --type base_caller \
-                --mindepth 10 --minpercent 1 --out testdata/example.tsv
+                --mindepth 10 --minpercent 1 --out example.tsv
 
 ```
+
+Usage Notes
+-----------
+
+A BAM file is required to get the columns derived from bam-readcount. If you don't provide a BAM file, you'll get limited information derived from the VCF file. , but if it's provided, you also need to provide the appropriate reference file. You may need to sort or index the BAM. 
+
+You'll likely see warnings about the mapping quality; the mapping quality is not working currently due to requirements form bam-readcount. 
+
+This tool only reports on positions where the input VCF file has identified a variant. If you want information on other positions, use `bam-readcount` directly.
+
+Protein translation and Synonymous/Non-snynoymous identification are not yet implemented.
+
 
 Output Info
 ===========
