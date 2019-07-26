@@ -1,10 +1,10 @@
 FROM centos:centos7
 MAINTAINER Michael Panciera
 
-ENV PYTHON_VERSION 3.6
+ENV PYTHON_VERSION 3.7
 
 RUN yum -y update && \
-    yum -y install curl bzip2
+    yum -y install curl bzip2 git .   # git to allow git+ pip installs, bzip2 for conda
 
 ADD . /vartable
 
