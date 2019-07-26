@@ -8,6 +8,7 @@ from typing import Tuple, Dict, List, Iterator, Iterable, Any, Callable, NamedTu
 import itertools
 from functools import partial
 
+from .bam_rc import bam_readcount_pos, BRCRow, BRCEntry
 
 HEADERS = ['Reference ID', 'Position', 'Total Depth', 'Ref Base', 'Alt Base', 'Ref Frequency', 'Alt Frequency', 'Codon', 'Codon Type']
 AMBIGUITY_TABLE = { 'A': 'A', 'T': 'T', 'G': 'G', 'C': 'C', 'N': 'N', 'AC': 'M', 'AG': 'R', 'AT': 'W', 'CG': 'S', 'CT': 'Y', 'GT': 'K', 'ACG': 'V', 'ACT': 'H', 'AGT': 'D', 'CGT': 'B', 'ACGT': 'N' }
@@ -77,7 +78,7 @@ def lofreq_process(vcf_path, min_percent, min_depth, out_path):
   with open(vcf_path, 'r') as vcf_handle:
     unfiltered_muts = map(flatten_vcf_record, vcf.Reader(vcf_handle))
     muts = filter(passes, unfiltered_muts)
-    
+
     _dicts = muts_to_dicts(muts)
     def passes2(dict):
       return (dict['Total Depth'] >= min_depth) and (dict['Alt Frequency'] >= min_percent)
@@ -110,7 +111,7 @@ from typing import Union,Dict
 Row = Dict[str, Union[str, int, float]]
 RCRow = Dict[str, Union[int, float]]
 
-  
+
 def main() -> None:
   parser = argparse.ArgumentParser(description='Create a table from VCF with summary info. ')
   parser.add_argument('vcf_path', help='VCF input, from lofreq or ngs_mapper.base_caller')
@@ -122,22 +123,21 @@ def main() -> None:
   parser.add_argument('--ref', dest='ref', required=False, help='Reference fasta file required for BAM processing.')
   args = parser.parse_args()
 
-  if args.bam: 
+  if args.bam:
       assert args.ref, "Reference required with Bam input!"
 
   if args.type == 'lofreq':
       dicts = lofreq_process(args.vcf_path, args.minp, args.mind, args.out)
   elif args.type == 'base_caller':
-      dicts = base_caller_process(args.vcf_path, args.minp, args.mind, args.out) 
+      dicts = base_caller_process(args.vcf_path, args.minp, args.mind, args.out)
   if args.bam:
-      from bam_rc import bam_readcount_pos, BRCRow, BRCEntry
       listdicts = list((d for d in dicts if d['Alt Base'] != '*'))
       ref_id = listdicts[0]['Reference ID'] # TODO: multiple refs in a single vcf
       get_info = partial(bam_readcount_pos, args.bam, args.ref, args.mind, ref_id)
       bam_info = map(get_info, (x['Position'] for x in listdicts))
       def to_dict(v_d: Dict[str, Any], brc: BRCRow) -> Dict[str, Any]:
           entry = brc.entries[ str(v_d['Alt Base']) ]
-          #entry = brc.entries['='] # not reliable 
+          #entry = brc.entries['='] # not reliable
           # below should actually be type safe
           return {k : getattr(entry, k) for k in entry._fields if k != 'base' }
       brc_dicts =  map(to_dict, listdicts, bam_info)
@@ -149,6 +149,6 @@ def main() -> None:
 # AY487947.1    142     .       A       C,G     .       .       DP=2087;RC=2083;RAQ=37;PRC=100;AC=1,3;AAQ=37,37;PAC=0,0;CBD=2083;CB=A
 # Flu is a special case again. have to groupby, map, and flatten; should be an
 # exmaple of this in . . . . no, actually, just print the reference ID
-  
+
 if __name__ == '__main__':
     main()

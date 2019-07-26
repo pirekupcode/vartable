@@ -1,3 +1,7 @@
 sut:
   build: .
-  command: pip install -r test-requirements.txt && nosetests test/*.py ; mypy vartable/*.py ; mypy test/*.py ; pylint --diable=C --disable=bad-indentation vartable/*.py test/*.py ;
+  command: bash -c "pip install -r test/test-requirements.txt && 
+                    test/bin/run-linters.sh || true &&   # don't fail the build on bad lint
+                    nosetests test/*.py &&
+                    vartable_report testdata/fullsample.bam.vcf --bam testdata/fullsample.bam --ref testdata/Den1__WestPac__1997.fasta --type base_caller  --mindepth 10 --minpercent 1 --out testdata/docker-test.tsv  &&
+                    python -c "assert (open('testdata/docker-test.tsv').read() == open('testdata/example.tsv').read()"
