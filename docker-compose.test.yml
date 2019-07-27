@@ -1,7 +1,3 @@
 sut:
   build: .
-  command: bash -c "pip install -r test/test-requirements.txt && 
-                    test/bin/run-linters.sh || true &&   # don't fail the build on bad lint
-                    nosetests test/*.py &&
-                    vartable_report testdata/fullsample.bam.vcf --bam testdata/fullsample.bam --ref testdata/Den1__WestPac__1997.fasta --type base_caller  --mindepth 10 --minpercent 1 --out testdata/docker-test.tsv  &&
-                    python -c "assert (open('testdata/docker-test.tsv').read() == open('testdata/example.tsv').read())"
+  command: bash -c "pip install -r test/test-requirements.txt && test/bin/testrunner.sh"
