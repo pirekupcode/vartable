@@ -16,5 +16,5 @@ ENV PATH=/vartable/miniconda/bin/:$PATH
 
 RUN conda clean --all --yes && \ 
     rm miniconda3.sh && \
-    rmp -e --nodeps curl bzip2 && \ 
+    rpm -e --nodeps curl bzip2 && \ 
     yum clean all # this inherited image should `yum clean all` automatically
