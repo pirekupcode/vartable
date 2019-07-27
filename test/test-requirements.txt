@@ -1,3 +1,2 @@
 nose
-git+https://github.com/python/mypy 
 pylint
