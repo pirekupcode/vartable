@@ -10,6 +10,7 @@ def func_blah_test1() -> None:
     ok_(True, "True is true")
     actual, expected = 3, 5
     eq_(3, 5, "Actual {0} is not Expected {1}".format(actual, expected))
+    simple = SimpleCDS(True, 0, 3)
        
     # duplicate dirs are impossible anyway, but still using Counter
 def func_blah_test2() -> None:
