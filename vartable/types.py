@@ -99,13 +99,6 @@ def simple_translate(ref: Ref, cds: SimpleCDS, alt: Nuc, alt_pos: int) -> Result
         raise ValueError(f"Codon of position {alt_pos} not found in reference.")
     return codons_and_proteins(ref, cpos, alt_pos, alt, cds.isReverse)
 
-from typing import overload
-
-#@overload
-#def get_region(pos: int, cds: SimpleCDS) -> Optional[SimpleCDS]: ...
-#@overload
-#def get_region(pos: int, cds: CompoundCDS) -> Optional[CompoundCDS]: ...  
-
 def in_region(pos: int, cds: CDS) -> bool:
     if isinstance(cds, CompoundCDS):
         return find(lambda r: r.start <= pos <= r.end, cds.regions) is not None
@@ -128,15 +121,94 @@ def codons_and_proteins(ref: Ref, cpos: int, alt_pos: int, alt: Nuc, reverse: bo
     return Result( Codon(alt_codon), Codon(codon), 
             ref_aa, alt_aa, (alt_aa == ref_aa), cpos, alt)
 
-def translate_all(ref: Ref, cdss: List[CDS], variants: Dict[int, List[Nuc]]) -> List[Result]:
+from typing import NamedTuple
+class Failure(NamedTuple):
+    exception: Exception
+
+#TODO: design error-handling ahead of time and read. 
+from typing_extensions import TypedDict
+
+
+# some way to do this betterer?
+def dispatch_translate(ref: Ref, cds: CDS, pos: int, alt: Nuc) -> Result:
+    if isinstance(cds, SimpleCDS):
+        return simple_translate(ref, cds, alt, pos)
+    elif isinstance(cds, CompoundCDS):
+        return compound_translate(ref, cds, alt, pos)
+
+def try2fail(f: Callable[...,T], *args: Any) -> Union[T, Failure]:
+    try: 
+        return f(*args)
+    except Exception as e:
+        return Failure(e)
+
+def none2fail(msg: str, x: Optional[T]) -> Union[T, Failure]:
+    if x is None:
+        return Failure(ValueError(msg))
+    else:
+        return x
+
+ResDict = TypedDict('ResDict', 
+        { 'position' : int, 'alts' : List[Nuc], 'codons' : List[Codon], 
+          'proteins' : List[AA], 'synonymous' : bool })
+
+
+def catMaybes(xs: List[Optional[T]]) -> Optional[List[T]]:
+    res: List[T] = []
+    for x in xs:
+        if x is not None:
+            res.append(x)
+        else:
+            return None
+    return res
+V = TypeVar('V')
+E = TypeVar('E')
+
+def catEither(xs: List[Union[E, V]]) -> Union[E, List[V]]:
+    res: List[V] = []
+    for x in xs:
+        if isinstance(x, V):
+            res.append(x)
+        else:
+            return None
+    return res
+        
+def translate_all(ref: Ref, cdss: List[CDS], variants: Dict[int, List[Nuc]]) -> List[Union[Failure, ResDict]]:
     ''' Dict[int, List[Nuc]] are our alternates organized by their position
         note that we may have multiple alternates at a single position.
-        In this case, altProtein becomes the '''
+        In this case, altProtein becomes the ''' 
+    cds_alts: List[Tuple[Optional[CDS], Tuple[int, List[Nuc]]]]  = \
+            [( find(lambda cds: in_region(pos, cds), cdss),  \
+            (pos, variants[pos]) ) \
+            for pos in variants] 
+    def dispatch(ref: Ref, cds: Optional[CDS], var: Tuple[int, List[Nuc]]) -> Union[Failure, ResDict]:
+        pos, nts = var
+        if cds is None:
+            return Failure(ValueError(f"No CDS found at position {pos}.")) 
+        #results = [dispatch_translate(ref, cds, pos, nt) for nt in nts]
+        results_ = [try2fail(dispatch_translate, ref, cds, pos, nt) for nt in nts]
+        results = catEither(results_)
+        reveal_type(results)
+        assert bool(results) # non-empty
+        dicts = []
+        for r in results: 
+            if isinstance(r, Failure):
+                dicts.append(r)
+            else:
+                pass
+        alts = [x.alt for x in results]
+        refProteins = [x.refProtein for x in results]
+        proteins = [ refProteins[0] ] + [x.altProtein for x in results]
+        codons = [results[0].refCodon] + [x.altCodon for x in results]
+        from functools import reduce
+        synonymous = reduce(lambda x,y: x and y, [x.isSynonymous for x in results])
+        return { 'position' : pos, 'alts' : nts, 'codons' : codons, \
+                'proteins' : proteins, 'synonymous' : synonymous}
+    from itertools import starmap
+    return [dispatch(ref, x[0], x[1]) for x in cds_alts]
+        # return Failure(ValueError("foo")) 
 
-#    cds_alts: List[Tuple[Optional[CDS], Tuple[int, List[Nuc]]]]  = \
-#            [( find(lambda cds: in_region(pos, cds), cdsss),  \
-#            (pos, variants[pos]) ) \
-#            for pos in variants]
+    #filter(lambda x: x is not None, 
 #    cds_alts: Dict[CDS, Tuple[int, List[Nuc]]] = \
 
     pass
