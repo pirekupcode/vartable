@@ -1,21 +1,20 @@
 FROM centos:centos7
 MAINTAINER Michael Panciera
 
-ENV PYTHON_VERSION 3.6
+ENV PYTHON_VERSION 3.7
 
 RUN yum -y update && \
-    yum -y install \
-      cmake patch git curl
+    yum -y install curl bzip2 git .   # git to allow git+ pip installs, bzip2 for conda
 
-RUN yum install -y bzip2
+ADD . /vartable
 
-COPY july-22-latest-3.sh /tmp/miniconda.sh
+WORKDIR /vartable
 
-RUN bash /tmp/miniconda.sh -bfp /usr/local/ \
-    && rm -rf /tmp/miniconda.sh \
-    && conda update conda \
-    && conda install -y python=$PYTHON_VERSION \
-    && conda clean --all --yes \
-    && conda install -c conda-requirements.txt \
-    && pip install pip-requirements.txt \
-    && python setup.py develop
+RUN bash install.sh /vartable/miniconda
+
+ENV PATH=/vartable/miniconda/bin/:$PATH
+
+RUN conda clean --all --yes && \ 
+    rm miniconda3.sh && \
+    rpm -e --nodeps curl bzip2 && \ 
+    yum clean all # this inherited image should `yum clean all` automatically

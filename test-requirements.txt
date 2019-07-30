@@ -1,4 +1,0 @@
-nosetests
-git+https://github.com/python/mypy 
-flake8
-pylint
