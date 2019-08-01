@@ -115,6 +115,9 @@ def dispatch(rec: SeqFeature, variants: Iterable[Tuple[int, Nuc]]) -> List[TResu
     results = list(starmap(partial(translate_one, rec.seq, cdss), variants))
     return results
 
+def handle_multi_alts(rec: SeqFeature, variants: Dict[int, List[Nuc]]) -> Dict[int, TResult]: 
+    raise NotImplementedError("handle_multi_alts not implemented.")
+
 def main():
     #TODO: fill in
     variants = _
