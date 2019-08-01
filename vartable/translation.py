@@ -4,7 +4,7 @@ from functools import partial
 from Bio import SeqIO 
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, SeqFeature
 from Bio.Seq import Seq
-from typing import Union, List, Tuple, Any, Iterator, Sequence, TypeVar, Optional, Iterable
+from typing import Union, List, Tuple, Any, Iterator, Sequence, TypeVar, Optional, Iterable, Dict
 from Bio.Data.CodonTable import TranslationError
 from dataclasses import dataclass
 import re
@@ -59,7 +59,7 @@ find = compose(first, filter)
 
 # combine multiple alts later or just
 # print a position multiple times.
-def translate_one(ref: Seq, cdss: List[SeqFeature], pos: int, alt: str) -> Any:
+def translate_one(ref: Seq, cdss: List[SeqFeature], pos: int, alt: str) -> TResult:
     cds  = find(partial(get_region, pos), cdss)
     alt_seq = ref[:pos] + alt + ref[pos+1:]
      # arguably the absolute_codon_start should be calculated elsewhere 
