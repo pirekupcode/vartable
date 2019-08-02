@@ -56,10 +56,11 @@ def first(seq: Union[Iterator[T], Sequence[T]]) -> Optional[T]:
             return None
 
 find = compose(first, filter)
-
 # combine multiple alts later or just
 # print a position multiple times.
 def translate_one(ref: Seq, cdss: List[SeqFeature], pos: int, alt: str) -> TResult:
+    '''Warning: Assumes 0-based indexing of all fields. Returns a result that also uses 0-based indexing.  
+        See the TResult class for more details. '''
     cds  = find(partial(get_region, pos), cdss)
     alt_seq = ref[:pos] + alt + ref[pos+1:]
      # arguably the absolute_codon_start should be calculated elsewhere 

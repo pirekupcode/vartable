@@ -8,6 +8,7 @@ from typing import Union, List
 from typing_extensions import NewType, Literal
 from nose.tools import eq_, ok_
 from dataclasses import dataclass
+# Warning: all tests should use 0-based indexing.
 
 #@dataclass 
 #class Seq:
@@ -47,17 +48,16 @@ def make_simple_location(start: int, end: int, strand: Strand) -> FeatureLocatio
 
 def translate_one_test1() -> None:
     seq = Seq('ACTGGCG') # ref @ 4 is G
-    location = CompoundLocation( [FeatureLocation(ExactPosition(1), ExactPosition(7), 1), \
+    location = CompoundLocation( [FeatureLocation(ExactPosition(0), ExactPosition(6), 1), \
             FeatureLocation(ExactPosition(8), ExactPosition(11), strand=1)], 'join') 
     cds = SeqFeature(location=location)
 
-    expected = TResult(position=4, alt='A', codon_position=1, ref_codon='GGC', alt_codon='AGC', in_coding_region=True, \
+    expected = TResult(position=3, alt='A', codon_position=3, ref_codon='GGC', alt_codon='AGC', in_coding_region=True, \
             ref_aa='G', alt_aa='S', synonymous=False, alt_is_invalid_stop=False)
 
-    actual_result = translate_one(seq, [cds], 4, 'A') 
+    actual_result = translate_one(seq, [cds], 3, 'A') 
     
     eq_(expected, actual_result, f"\n\nGiven {seq._data}:\n\nexpected: {expected} \n actual: {actual_result}")
-    #assert expected == actual_result, f"Expected {expected} but got {actual_result}"
 
 def translate_one_test2() -> None:
     pass
