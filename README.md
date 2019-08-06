@@ -1,5 +1,14 @@
 # VarTable
 
+
+
+[![Build Status](https://travis-ci.org/VDBWRAIR/vartable.svg?branch=master)](https://travis-ci.org/VDBWRAIR/vartable)
+[![codecov](https://codecov.io/gh/VDBWRAIR/vartable/branch/master/graph/badge.svg)](https://codecov.io/gh/VDBWRAIR/vartable)
+
+
+Usage 
+-----------
+
 Uses bam-readcount and PyVCF to assist manual curation of viral genomes.
 
 ```bash
@@ -9,9 +18,6 @@ $ vartable_report testdata/fullsample.bam.vcf --bam testdata/fullsample.bam \
                 --mindepth 10 --minpercent 1 --out example.tsv
 
 ```
-
-Usage Notes
------------
 
 A BAM file is required to get the columns derived from bam-readcount. If you don't provide a BAM file, you'll get limited information derived from the VCF file. , but if it's provided, you also need to provide the appropriate reference file. You may need to sort or index the BAM. 
 
