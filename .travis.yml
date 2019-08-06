@@ -16,10 +16,10 @@ before_install:
 
 install:
   - docker-compose -f docker-compose.test.yml -p ci build 
+  - pip install codecov
 
 script:
     - docker-compose -f docker-compose.test.yml -p ci up
 
 after_script: 
-    - pip install codecov
     - codecov
