@@ -20,4 +20,6 @@ install:
 script:
     - docker-compose -f docker-compose.test.yml -p ci up
 
-after_script: codecov
+after_script: 
+    - pip install codecov
+    - codecov
