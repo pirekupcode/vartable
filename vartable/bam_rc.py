@@ -54,6 +54,12 @@ def bam_readcount_pos(bam: str, fasta: str, mindepth: int, ref_id: str, pos: int
     assert len(rows) == 1, str(cmd) + "\nShould be length 1:  " + str(rows)
     return rows[0]
 
+def bam_readcount_all(bam: str, fasta: str, mindepth: int) -> Iterator[BRCRow]:
+    cmd = ['bam-readcount', bam, '-f', fasta,  '-w', '0', '-b', str(mindepth)]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    lines = io.TextIOWrapper(proc.stdout, encoding="utf-8")
+    return map(parse_line, lines)
+    
 def parse_entry(s: str) -> BRCEntry:
   fs = s.strip().split(':')
   base = fs[0]
