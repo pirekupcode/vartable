@@ -1,3 +1,5 @@
 sut:
   build: .
-  command: bash -c "pip install -r test/test-requirements.txt && test/bin/testrunner.sh && codecov"
+  command: bash -c "pip install -r test/test-requirements.txt && test/bin/testrunner.sh"
+  volumes:
+      ./:/vartable
