@@ -1,5 +1,5 @@
 #type: ignore
-from vartable.translation import TResult
+from vartable.translation import TResult, translate_one
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, SeqFeature, ExactPosition
 from Bio.Seq import Seq
 from Bio.Data.CodonTable import TranslationError
@@ -37,16 +37,11 @@ Strand = Literal[-1, 1]
 #class SeqFeature:
 #    location: Union[CompoundLocation, FeatureLocation]
 
-def translate_one(ref: Seq, cdss: List[SeqFeature], pos: int, alt: str) -> TResult:
-    from typing import cast
-    return cast(None, TResult)
-from vartable.translation import  translate_one, dispatch, handle_multi_alts
-
 def make_simple_location(start: int, end: int, strand: Strand) -> FeatureLocation:
     return FeatureLocation(ExactPosition(start), ExactPosition(end), strand)
 
 
-def translate_one_test1() -> None:
+def test_translate_one1() -> None:
     seq = Seq('ACTGGCG') # ref @ 4 is G
     location = CompoundLocation( [FeatureLocation(ExactPosition(0), ExactPosition(6), 1), \
             FeatureLocation(ExactPosition(8), ExactPosition(11), strand=1)], 'join') 
