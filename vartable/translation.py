@@ -1,8 +1,10 @@
+# type: ignore
 from toolz import compose
 from itertools import starmap
 from functools import partial
 from Bio import SeqIO 
 from Bio.SeqFeature import CompoundLocation, FeatureLocation, SeqFeature
+from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from typing import Union, List, Tuple, Any, Iterator, Sequence, TypeVar, Optional, Iterable, Dict
 from Bio.Data.CodonTable import TranslationError
@@ -60,7 +62,8 @@ find = compose(first, filter)
 # print a position multiple times.
 def translate_one(ref: Seq, cdss: List[SeqFeature], pos: int, alt: str) -> TResult:
     '''Warning: Assumes 0-based indexing of all fields. Returns a result that also uses 0-based indexing.  
-        See the TResult class for more details. '''
+        See the TResult class for more details. 
+        Raises: TranslationError'''
     cds  = find(partial(get_region, pos), cdss)
     alt_seq = ref[:pos] + alt + ref[pos+1:]
      # arguably the absolute_codon_start should be calculated elsewhere 
@@ -109,14 +112,15 @@ def get_region(pos: int, cds: SeqFeature) -> SeqFeature:
     else: 
         return cds if loc._start <= pos <= loc._end else None
 
-def dispatch(rec: SeqFeature, variants: Iterable[Tuple[int, Nuc]]) -> List[TResult]: 
+def dispatch(rec: SeqRecord, variants: Iterable[Tuple[int, Nuc]]) -> List[TResult]: 
+    ''' dispatch to translation. '''
     #TODO: returns something that's useful with the other vartable components and can be joined. 
     # a @dataclass hierarchy could be appropriate for each component: OG vartable, bam-readcount, and translation
     cdss  = list(filter(lambda x: x.type == 'CDS', rec.features))
     results = list(starmap(partial(translate_one, rec.seq, cdss), variants))
     return results
 
-def handle_multi_alts(rec: SeqFeature, variants: Dict[int, List[Nuc]]) -> Dict[int, TResult]: 
+def handle_multi_alts(rec: SeqRecord, variants: Dict[int, List[Nuc]]) -> Dict[int, TResult]: 
     raise NotImplementedError("handle_multi_alts not implemented.")
 
 def main():
