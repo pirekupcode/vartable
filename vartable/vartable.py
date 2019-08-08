@@ -1,13 +1,15 @@
-#!/media/VD_Research/Admin/PBS/Software/ngs_mapper/ngs_mapper-lofreq/miniconda/bin/python
-# module load  ngs_mapper/*
-
+# type: ignore
 import csv
 from toolz.dicttoolz import merge, dissoc, merge_with, valfilter, keyfilter #done
 import vcf #done
 from typing import Tuple, Dict, List, Iterator, Iterable, Any, Callable, NamedTuple, BinaryIO
 import itertools
-from functools import partial
+from functools import partial 
+from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
 
+from . import translation
 from .bam_rc import bam_readcount_pos, BRCRow, BRCEntry
 
 HEADERS = ['Reference ID', 'Position', 'Total Depth', 'Ref Base', 'Alt Base', 'Ref Frequency', 'Alt Frequency', 'Codon', 'Codon Type']
@@ -121,15 +123,50 @@ def main() -> None:
   parser.add_argument('--minpercent', dest='minp', type=int, required=True, help='Minimum percentage as an integer to filter out variants.')
   parser.add_argument('--bam', dest='bam', required=False, help='Optional indexed BAM input.')
   parser.add_argument('--ref', dest='ref', required=False, help='Reference fasta file required for BAM processing.')
+  parser.add_argument('--genbank', dest='genbank', required=False, help='Optional genbank file with CDS feature info.')
+  parser.add_argument('--cds-rev', dest='cds_rev', action='append', metavar=('start', 'end'), nargs=2, required=False, help='Optional: zero-based coordinates for a simple cds translated on the reverse strand. Requires reference.')
+  parser.add_argument('--cds-fwd', dest='cds_fwd', action='append', metavar=('start', 'end'), nargs=2, required=False, help='Optional: zero-based coordinates for a simple cds translated on the forward strand. Requires reference.')
   args = parser.parse_args()
 
   if args.bam:
       assert args.ref, "Reference required with Bam input!"
-
   if args.type == 'lofreq':
       dicts = lofreq_process(args.vcf_path, args.minp, args.mind, args.out)
   elif args.type == 'base_caller':
       dicts = base_caller_process(args.vcf_path, args.minp, args.mind, args.out)
+  if args.cds_rev or args.cds_fwd or args.genbank:
+      assert not ((args.cds_rev or args.cds_fw) and args.genbank), "CDS and genank files cannot be used simultaneously!"
+      assert args.ref, "Reference file required when passing CDS as an argument."
+      # each seqfeature represents a CDS
+      fwd_cdss = [SeqFeature(location=FeatureLocation(start, end, strand=+1), type='CDS')
+         for (start, end) in args.cds_fwd ]
+      rev_cdss = [SeqFeature(location=FeatureLocation(start, end, strand=-1), type='CDS')
+         for (start, end) in args.cds_rev ]
+      with open(args.ref) as ref_file:
+          refs = list(SeqIO.parse(ref_file, format='fasta'))
+          assert len(refs) == 1, "Only one reference sequence currently supported."
+          rec = refs[0]
+          rec.features = sorted(fwd_cdss + rev_cdss, key=lambda x: x.location._start)
+      if args.genbank:
+          with open(args.genbank) as genbank_file:
+              genbanks = list(SeqIO.parse(genbank_file, format='genbank'))
+              assert len(genbanks) == 1, "Only one genbank record currently supported."
+              rec = genbanks[0]
+      variants = [ (d['Position'], d['Alt Base']) for d in dicts ]
+      translation_results = translation.dispatch(rec, variants)
+      # Note: dicts will have None values, but "None" is acceptable in the output TSV
+      dicts = [d.update(tr.__dict__) for d, tr in zip(dicts, translation_results) ]
+      dupe_fields = ('position', 'alt')
+      for d in dicts:
+          assert d['position'] == d['Position'], "Ordering of translation return values went bad."
+          # delete fields that are now duplicated.
+          for k in dupe_fields:
+              del d[k]
+              del d[k]
+      fields = list(translation.TResult.__dataclass_fields__.keys())
+      fields = [f for f in fields if not (f in dupe_fields)]
+      HEADERS = HEADERS[:] + fields
+
   if args.bam:
       listdicts = list((d for d in dicts if d['Alt Base'] != '*'))
       ref_id = listdicts[0]['Reference ID'] # TODO: multiple refs in a single vcf
@@ -143,7 +180,7 @@ def main() -> None:
       brc_dicts =  map(to_dict, listdicts, bam_info)
       dicts = map(merge, listdicts, brc_dicts)
       HEADERS = ['Reference ID', 'Position', 'Total Depth', 'Ref Base', 'Alt Base', 'Ref Frequency', 'Alt Frequency', 'Codon', 'Codon Type']
-      HEADERS = HEADERS[:] + [ f for f in BRCEntry._fields if f != 'base']
+      HEADERS = HEADERS[:] + [ f for f in BRCEntry._fields if f != 'base'] 
   write_tsv(args.out, dicts, HEADERS[:])
 # PAC is a lit, because will report multiple Alleles.  i.e.
 # AY487947.1    142     .       A       C,G     .       .       DP=2087;RC=2083;RAQ=37;PRC=100;AC=1,3;AAQ=37,37;PAC=0,0;CBD=2083;CB=A
