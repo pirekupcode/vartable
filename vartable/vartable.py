@@ -135,12 +135,12 @@ def main() -> None:
   elif args.type == 'base_caller':
       dicts = base_caller_process(args.vcf_path, args.minp, args.mind, args.out)
   if args.cds_rev or args.cds_fwd or args.genbank:
-      assert not ((args.cds_rev or args.cds_fw) and args.genbank), "CDS and genank files cannot be used simultaneously!"
+      assert not ((args.cds_rev or args.cds_fwd) and args.genbank), "CDS and genank files cannot be used simultaneously!"
       assert args.ref, "Reference file required when passing CDS as an argument."
       # each seqfeature represents a CDS
-      fwd_cdss = [SeqFeature(location=FeatureLocation(start, end, strand=+1), type='CDS')
+      fwd_cdss = [] if not args.cds_fwd else [SeqFeature(location=FeatureLocation(start, end, strand=+1), type='CDS')
          for (start, end) in args.cds_fwd ]
-      rev_cdss = [SeqFeature(location=FeatureLocation(start, end, strand=-1), type='CDS')
+      rev_cdss = [] if not args.cds_rev else [SeqFeature(location=FeatureLocation(start, end, strand=-1), type='CDS')
          for (start, end) in args.cds_rev ]
       with open(args.ref) as ref_file:
           refs = list(SeqIO.parse(ref_file, format='fasta'))
